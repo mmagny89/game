@@ -39,6 +39,7 @@
 {% endblock %}
 
 {% block javascripts %}
+    {{ parent() }}
     <script type="module">
         import { initCombatPlayer } from "{{ asset('js/combat/player.js') }}";
 
