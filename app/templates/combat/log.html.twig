@@ -1,0 +1,13 @@
+{% extends 'base.html.twig' %}
+{% block title %}{{ title|default('Journal du combat') }}{% endblock %}
+{% block body %}
+    <div class="card">
+        <h2>{{ title|default('Journal du combat') }}</h2>
+        <ul>
+            {% for l in lines %}
+                <li>{{ l }}</li>
+            {% endfor %}
+        </ul>
+        <p><a href="{{ path('app_home') }}">← Retour</a></p>
+    </div>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends 'base.html.twig' %}
+{% block title %}Mon profil{% endblock %}
+
+{% block body %}
+    <div class="card">
+        <h2>Profil</h2>
+        <p class="muted">Connecté en tant que <strong>{{ app.user.userIdentifier }}</strong></p>
+
+        <div class="row">
+            <div class="grow card">
+                <h3>Personnage</h3>
+                <form method="post" action="{{ path('profile_index') }}">
+                    <input type="hidden" name="action" value="update_char">
+                    <input type="hidden" name="_token" value="{{ csrf_token('profile_update_char') }}">
+                    <p>
+                        <label>Nom<br>
+                            <input type="text" name="name" maxlength="60" required value="{{ char.name }}">
+                        </label>
+                    </p>
+                    <p>
+                        <label>Genre<br>
+                            <select name="gender">
+                                <option value="F" {{ char.gender == 'F' ? 'selected' : '' }}>Femme</option>
+                                <option value="M" {{ char.gender == 'M' ? 'selected' : '' }}>Homme</option>
+                            </select>
+                        </label>
+                    </p>
+                    <p><button type="submit">Enregistrer</button></p>
+                </form>
+            </div>
+
+            <div class="grow card">
+                <h3>Changer le mot de passe</h3>
+                <form method="post" action="{{ path('profile_index') }}">
+                    <input type="hidden" name="action" value="update_pwd">
+                    <input type="hidden" name="_token" value="{{ csrf_token('profile_update_pwd') }}">
+                    <p>
+                        <label>Mot de passe actuel<br>
+                            <input type="password" name="current_password" required>
+                        </label>
+                    </p>
+                    <p>
+                        <label>Nouveau mot de passe<br>
+                            <input type="password" name="new_password" minlength="6" required>
+                        </label>
+                    </p>
+                    <p>
+                        <label>Confirmer le nouveau mot de passe<br>
+                            <input type="password" name="confirm_password" minlength="6" required>
+                        </label>
+                    </p>
+                    <p><button type="submit">Mettre à jour</button></p>
+                </form>
+            </div>
+        </div>
+
+        <p><a href="{{ path('app_home') }}">← Retour</a></p>
+    </div>
+{% endblock %}

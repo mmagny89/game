@@ -1,0 +1,38 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>{% block title %}Arena{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+</head>
+<body>
+<header>
+    <h1>Arena (local)</h1>
+    <nav>
+        {% if app.user %}
+            <a href="{{ path('app_home') }}">Accueil</a> ·
+            <a href="{{ path('shop_index') }}">Boutique</a> ·
+            <a href="{{ path('arena_index') }}">
+                Arène PvP
+                {{ render(path('arena_badge')) }}
+            </a> ·
+            <a href="{{ path('profile_index') }}">Profil</a> ·
+            <a href="{{ path('app_logout') }}">Se déconnecter</a>
+            <span class="muted"> — {{ app.user.userIdentifier }}</span>
+        {% else %}
+            <a href="{{ path('app_login') }}">Connexion</a> ·
+            <a href="{{ path('app_register') }}">Inscription</a>
+        {% endif %}
+    </nav>
+</header>
+<main>
+    {% for label, messages in app.flashes %}
+        {% for m in messages %}
+            <div class="flash flash-{{ label }}">{{ m }}</div>
+        {% endfor %}
+    {% endfor %}
+    {% block body %}{% endblock %}
+</main>
+</body>
+</html>

@@ -1,0 +1,30 @@
+{% extends 'base.html.twig' %}
+{% block title %}Créer mon personnage{% endblock %}
+{% block body %}
+    <div class="card">
+        <h2>Créer mon personnage</h2>
+        {% if errors is defined and errors %}
+            <ul>
+                {% for e in errors %}
+                    <li style="color:#fca5a5;">{{ e }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+        <form method="post" action="{{ path('character_create') }}">
+            <p>
+                <label>Nom du personnage<br>
+                    <input type="text" name="name" value="{{ old.name|default('') }}" required maxlength="60">
+                </label>
+            </p>
+            <p>
+                <label>Genre<br>
+                    <select name="gender">
+                        <option value="F" {% if old.gender|default('F') == 'F' %}selected{% endif %}>Femme</option>
+                        <option value="M" {% if old.gender|default('F') == 'M' %}selected{% endif %}>Homme</option>
+                    </select>
+                </label>
+            </p>
+            <p><button type="submit">Créer</button></p>
+        </form>
+    </div>
+{% endblock %}

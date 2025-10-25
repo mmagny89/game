@@ -1,0 +1,78 @@
+{% extends 'base.html.twig' %}
+{% block title %}Combat vs {{ npc.name }}{% endblock %}
+
+{% block stylesheets %}
+    <link rel="stylesheet" href="{{ asset('css/combat.css') }}">
+{% endblock %}
+
+{% block body %}
+    <div class="card">
+        <h2>Combat vs {{ npc.name }}</h2>
+
+        <div id="error" style="display:none; background:#7f1d1d; color:#fff; padding:8px 12px; border-radius:8px; margin-bottom:8px;"></div>
+
+        <div class="row" style="gap:16px;">
+            <div class="grow">
+                <div class="muted" style="margin-bottom:4px;">{{ player.name|default('Toi') }} — PV <span id="pv_player_val">{{ player.hpmax }}</span> / {{ player.hpmax }}</div>
+                <div style="background:#1f2937;border-radius:10px;overflow:hidden;height:14px;">
+                    <div id="pv_player_bar" style="height:14px;width:100%;background:linear-gradient(90deg,#22c55e,#06b6d4)"></div>
+                </div>
+            </div>
+            <div class="grow">
+                <div class="muted" style="margin-bottom:4px;">{{ npc.name }} — PV <span id="pv_npc_val">{{ npc.healthMax|default(0) }}</span> / {{ npc.healthMax|default(0) }}</div>
+                <div style="background:#1f2937;border-radius:10px;overflow:hidden;height:14px;">
+                    <div id="pv_npc_bar" style="height:14px;width:100%;background:linear-gradient(90deg,#f59e0b,#ef4444)"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="controls" style="margin:12px 0 8px; display:flex; gap:8px; align-items:center;">
+            <button id="btnPlayPause" class="ctrl">▶︎ Démarrer</button>
+            <button id="btnSpeed" class="ctrl" disabled>Vitesse 1×</button>
+            <button id="btnSkip" class="ctrl" hidden>⏭ Passer</button>
+            <button id="btnRestart" class="ctrl" hidden>🔁 Rejouer</button>
+            <a href="{{ path('app_home') }}" class="ctrl-link">← Retour</a>
+        </div>
+
+        <ul id="log" style="max-height:360px; overflow:auto; list-style:none; padding-left:0;"></ul>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    <script type="module">
+        import { initCombatPlayer } from "{{ asset('js/combat/player.js') }}";
+
+        const ctrl = initCombatPlayer({
+            postUrl: {{ post_url|json_encode|raw }},
+            csrf: {{ csrf_token|json_encode|raw }},
+            logEl: document.getElementById('log'),
+            pvRefs: {
+                pBar: document.getElementById('pv_player_bar'),
+                nBar: document.getElementById('pv_npc_bar'),
+                pVal: document.getElementById('pv_player_val'),
+                nVal: document.getElementById('pv_npc_val'),
+                pMax: {{ player.hpmax }},
+                nMax: {{ npc.healthMax|default(0) }},
+            },
+            playerName: {{ player.name|default('')|json_encode|raw }},
+        });
+
+        // Fetch + autoplay
+        const ok = await ctrl.fetchTurns();
+        if (ok) ctrl.play();
+
+        // Wire UI
+        const btnPlayPause = document.getElementById('btnPlayPause');
+        const btnSpeed     = document.getElementById('btnSpeed');
+        const btnSkip      = document.getElementById('btnSkip');
+
+        let playing = true;
+        btnPlayPause.addEventListener('click', () => {
+            if (playing) { ctrl.pause(); btnPlayPause.textContent = '▶︎ Reprendre'; }
+            else         { ctrl.play();  btnPlayPause.textContent = '⏸ Pause'; }
+            playing = !playing;
+        });
+        btnSpeed.addEventListener('click', () => ctrl.faster());
+        btnSkip.addEventListener('click',  () => ctrl.skip());
+    </script>
+{% endblock %}

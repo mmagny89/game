@@ -1,0 +1,47 @@
+{% extends 'base.html.twig' %}
+{% block title %}Combat #{{ combat.id }}{% endblock %}
+
+{% block stylesheets %}
+    <link rel="stylesheet" href="{{ asset('css/combat.css') }}">
+{% endblock %}
+
+{% block body %}
+    <div class="card">
+        <h2>Combat #{{ combat.id }} — {{ combat.attacker.name }} vs {{ combat.defenderCharacter.name }}</h2>
+
+        <div id="controls" style="margin:12px 0 8px; display:flex; gap:8px; align-items:center;">
+            <button id="btnPlay" class="ctrl">▶︎ Rejouer</button>
+            <button id="btnPause" class="ctrl" hidden>⏸ Pause</button>
+            <button id="btnSpeed" class="ctrl" hidden>Vitesse 1×</button>
+            <a href="{{ path('arena_index') }}" class="ctrl-link">← Arène</a>
+        </div>
+
+        <ul id="log" style="max-height:60vh; overflow:auto; list-style:none; padding-left:0; margin:0;"></ul>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    <script type="module">
+        import { initCombatReplay } from "{{ asset('js/combat/replay.js') }}";
+        const turns = JSON.parse({{ turns_json|json_encode|raw }});
+
+        const ctrl = initCombatReplay({
+            turns,
+            logEl: document.getElementById('log')
+        });
+
+        const btnPlay  = document.getElementById('btnPlay');
+        const btnPause = document.getElementById('btnPause');
+        const btnSpeed = document.getElementById('btnSpeed');
+
+        // Montrer les boutons seulement si on a des tours
+        if (Array.isArray(turns) && turns.length) {
+            btnPause.hidden = false;
+            btnSpeed.hidden = false;
+        }
+
+        btnPlay.addEventListener('click',  () => { ctrl.restart(); ctrl.play(); });
+        btnPause.addEventListener('click', () => ctrl.pause());
+        btnSpeed.addEventListener('click', () => ctrl.faster());
+    </script>
+{% endblock %}

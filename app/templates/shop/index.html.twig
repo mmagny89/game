@@ -1,0 +1,63 @@
+{% extends 'base.html.twig' %}
+{% block title %}Boutique{% endblock %}
+{% block body %}
+    <div class="card">
+        <h2>Boutique</h2>
+        {% if not char %}
+            <p>Lance <a href="{{ path('app_seed') }}">/dev/seed</a> puis reviens ici.</p>
+        {% else %}
+            <p>Or actuel : <strong>{{ char.gold }}</strong></p>
+            <table>
+                <thead>
+                <tr><th>Objet</th><th>Slot</th><th>Bonus</th><th>Prix</th><th>Action</th></tr>
+                </thead>
+                <tbody>
+                {% for it in items %}
+                    <tr>
+                        <td>{{ it.name }}</td>
+                        <td class="muted">{{ it.slot }}</td>
+                        <td>
+                            +ATK {{ it.attackBonus }}, +DEF {{ it.defenseBonus }}, +PV {{ it.healthBonus }}
+                        </td>
+                        <td>{{ it.price }}</td>
+                        <td>
+                            <form method="post" action="{{ path('shop_buy', {id: it.id}) }}" style="display:inline">
+                                <input type="hidden" name="_token" value="{{ csrf_token('shop_buy_' ~ it.id) }}">
+                                <button>Acheter</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+
+            <h3>Inventaire</h3>
+            {% if inv is empty %}
+                <p class="muted">Aucun objet dans l'inventaire.</p>
+            {% else %}
+                <ul>
+                    {% for i in inv %}
+                        <li>
+                            {{ i.item.name }} ({{ i.item.slot }})
+                            — {% if i.equipped %}<strong>Équipé</strong>{% else %}Déséquipé{% endif %}
+                            {% if i.equipped %}
+                                {# Déséquiper #}
+                                <form method="post" action="{{ path('shop_unequip', {id: i.id}) }}" style="display:inline">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('shop_unequip_' ~ i.id) }}">
+                                    <button type="submit">Déséquiper</button>
+                                </form>
+                            {% else %}
+                                {# Équiper #}
+                                <form method="post" action="{{ path('shop_equip', {id: i.id}) }}" style="display:inline">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('shop_equip_' ~ i.id) }}">
+                                    <button type="submit">Équiper</button>
+                                </form>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+            <p><a href="{{ path('app_home') }}">← Retour</a></p>
+        {% endif %}
+    </div>
+{% endblock %}

@@ -1,0 +1,11 @@
+/var/
+/vendor/
+.env.local
+.env.*.local
+/.idea/
+/node_modules/
+/public/build/
+/public/assets/
+/coverage/
+/phpunit.xml
+.php-cs-fixer.cache

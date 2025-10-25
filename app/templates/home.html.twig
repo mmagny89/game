@@ -1,0 +1,213 @@
+{% extends 'base.html.twig' %}
+{% block title %}Accueil{% endblock %}
+{% block body %}
+    <div class="card">
+        {% if not char %}
+            <p>Aucun joueur. Lance <a href="{{ path('app_seed') }}">/dev/seed</a> puis recharge cette page.</p>
+        {% else %}
+            <h2>{{ char.name }} (Niv. {{ char.level }})</h2>
+            <p class="muted">{{ user.email }}</p>
+            <div class="row">
+                <div class="grow card">
+                    <h3>Statistiques</h3>
+
+                    {# Barre PV + compteur #}
+                    {% set pct = (hpmax_total > 0) ? (100 * char.healthCurrent / hpmax_total) : 0 %}
+                    <div style="margin:8px 0;">
+                        <div style="background:#1f2937;border-radius:10px;overflow:hidden;height:14px;">
+                            <div id="hpbar" style="height:14px;width:{{ pct }}%;"></div>
+                        </div>
+                        <div class="muted" style="margin-top:4px;">
+                            PV : <span id="hpval">{{ char.healthCurrent }}</span> / {{ hpmax_total }}
+                            {% if not regen.is_full %}
+                                • Récupération : <span id="cooldown"></span>
+                            {% else %}
+                                • Prêt au combat ✅
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <ul>
+                        <li>Attaque : {{ char.attackBase }} <span class="muted">base</span> → <strong>{{ atk_total }}</strong> <span class="muted">total</span></li>
+                        <li>Défense : {{ char.defenseBase }} <span class="muted">base</span> → <strong>{{ def_total }}</strong> <span class="muted">total</span></li>
+                        <li>Or : {{ char.gold }}</li>
+                        <li>EXP : {{ char.exp }} / {{ 100 * char.level }}</li>
+                    </ul>
+                </div>
+
+                <div class="grow card">
+                    <h3>Équipement</h3>
+                    {% if equipped is empty %}
+                        <p class="muted">Aucun objet équipé.</p>
+                    {% else %}
+                        <ul>
+                            {% for e in equipped %}
+                                <li>{{ e.item.slot }} — {{ e.item.name }} (+ATK {{ e.item.attackBonus }}, +DEF {{ e.item.defenseBonus }}, +PV {{ e.item.healthBonus }})</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+
+                <div class="grow card">
+                    <h3>Combats dynamiques (scalés)</h3>
+                    {% set disabled = not regen.is_full %}
+                    <table>
+                        <thead>
+                        <tr><th>PNJ</th><th>Stats</th><th>Récompenses</th><th></th></tr>
+                        </thead>
+                        <tbody>
+                        {% for key, n in {'easy': npc_cards.easy, 'even': npc_cards.even, 'hard': npc_cards.hard} %}
+                            <tr>
+                                <td>
+                                    {% if key=='easy' %}<span class="badge badge-easy">Facile</span>{% endif %}
+                                    {% if key=='even' %}<span class="badge badge-even">Équilibré</span>{% endif %}
+                                    {% if key=='hard' %}<span class="badge badge-hard">Difficile</span>{% endif %}
+                                    <div class="muted">{{ n.name }} (Niv. {{ n.level }})</div>
+                                </td>
+                                <td class="muted">ATK {{ n.attack }} · DEF {{ n.defense }} · PV {{ n.health_max }}</td>
+                                <td>EXP +{{ n.exp_reward }} · Or {{ n.gold_min }}–{{ n.gold_max }}</td>
+                                <td>
+                                    {% set dm = npc_danger[key] %}
+                                    <span class="danger" style="background: {{ dm.color }}">{{ dm.emoji }} {{ dm.label }}</span>
+                                    <div class="muted" title="TTK toi / TTK ennemi">⏱ {{ dm.player_ttk }} / {{ dm.enemy_ttk }}</div>
+                                </td>
+                                <td>
+                                    <a class="button {{ disabled ? 'btn-disabled' : '' }}"
+                                       data-fight="scaled"
+                                       href="{{ path('combat_play_scaled', {diff: key}) }}"
+                                        {{ disabled ? 'aria-disabled=true' : '' }}>
+                                        Combattre
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="grow card">
+                    <h3>Boss (PNJ fixes)</h3>
+                    {% if bosses is empty %}
+                        <p class="muted">Aucun boss pour l’instant. <a href="{{ path('app_seed_bosses') }}">Créer des boss de démo</a></p>
+                    {% else %}
+                        <table>
+                            <thead>
+                            <tr><th>Nom</th><th>Stats</th><th>Récompenses</th><th></th></tr>
+                            </thead>
+                            <tbody>
+                            {% for b in bosses %}
+                                <tr>
+                                    <td><strong>{{ b.name }}</strong> <span class="muted">(Niv. {{ b.level }})</span></td>
+                                    <td class="muted">ATK {{ b.attack }} · DEF {{ b.defense }} · PV {{ b.healthMax }}</td>
+                                    <td>EXP +{{ b.expReward }} · Or {{ b.goldMin }}–{{ b.goldMax }}</td>
+                                    <td>
+                                        {% set dm = boss_danger[b.id] %}
+                                        <span class="danger" style="background: {{ dm.color }}">{{ dm.emoji }} {{ dm.label }}</span>
+                                        <div class="muted" title="TTK toi / TTK ennemi">⏱ {{ dm.player_ttk }} / {{ dm.enemy_ttk }}</div>
+                                    </td>
+                                    <td>
+                                        <a class="button {{ disabled ? 'btn-disabled' : '' }}"
+                                           data-fight="boss"
+                                           href="{{ path('combat_play', {id: b.id}) }}"
+                                            {{ disabled ? 'aria-disabled=true' : '' }}>
+                                            Combattre
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    {% endif %}
+                </div>
+
+                <style>
+                    .button { display:inline-block; background:#334155; color:#e5e7eb; padding:8px 12px; border-radius:8px; text-decoration:none; }
+                    .button:hover { background:#475569; }
+                    .btn-disabled { opacity:.5; pointer-events:none; }
+                    .badge { padding:2px 6px; border-radius:999px; font-size:12px; margin-right:6px; }
+                    .badge-easy { background:#064e3b; color:#a7f3d0; }
+                    .badge-even { background:#1f2937; color:#cbd5e1; }
+                    .badge-hard { background:#7f1d1d; color:#fecaca; }
+                    .danger {
+                        display:inline-block;
+                        color:#0b1220;
+                        padding:2px 8px;
+                        border-radius:999px;
+                        font-size:12px;
+                        font-weight:600;
+                    }
+                </style>
+            </div>
+            <p><a href="{{ path('shop_index') }}">Aller à la boutique →</a></p>
+        {% endif %}
+    </div>
+
+    <script>
+        (function(){
+            // Données serveur
+            const hpMaxTotal = {{ hpmax_total }};
+            const perMinute  = {{ regen.per_minute }};
+            let   hpCurrent  = {{ regen.hp_current }};
+            let   secondsRemaining = {{ regen.seconds_remaining }};
+            let   nextTickTs = {{ regen.next_tick_ts }};
+            const startDisabled = {{ regen.is_full ? 'false':'true' }};
+
+            const hpBar = document.getElementById('hpbar');
+            const hpVal = document.getElementById('hpval');
+            const cdEl  = document.getElementById('cooldown');
+            // Tous les liens de combat (scalés + boss)
+            const fights = Array.from(document.querySelectorAll('a[data-fight]'));
+
+            function enableFights(on){
+                fights.forEach(a => {
+                    if (on){ a.classList.remove('btn-disabled'); a.removeAttribute('aria-disabled'); }
+                    else   { a.classList.add('btn-disabled');    a.setAttribute('aria-disabled','true'); }
+                });
+            }
+
+            document.querySelectorAll('a[data-fight]').forEach(a=>{
+                a.addEventListener('click', (e)=>{
+                    const meter = a.closest('tr')?.querySelector('.danger')?.textContent || '';
+                    if (meter.includes('Mortel')) {
+                        if (!confirm('Ce combat est évalué "Mortel". Continuer ?')) {
+                            e.preventDefault();
+                        }
+                    }
+                });
+            });
+
+            function fmt(sec){
+                if (sec < 0) sec = 0;
+                const m = Math.floor(sec/60), s = Math.floor(sec%60);
+                return (m>0? m+' min ':'') + (m>0? String(s).padStart(2,'0'): s) + ' s';
+            }
+            function updateUI(){
+                const pct = Math.max(0, Math.min(100, 100*hpCurrent/hpMaxTotal));
+                hpBar.style.width = pct + '%';
+                hpVal.textContent = hpCurrent;
+                if (secondsRemaining > 0){
+                    if (cdEl) cdEl.textContent = fmt(secondsRemaining);
+                    enableFights(false);
+                } else {
+                    if (cdEl) cdEl.textContent = 'Prêt';
+                    enableFights(true);
+                }
+            }
+            function tick(){
+                const now = Math.floor(Date.now()/1000);
+                if (secondsRemaining > 0 && now >= nextTickTs){
+                    const before = hpCurrent;
+                    hpCurrent = Math.min(hpMaxTotal, hpCurrent + perMinute);
+                    const gained = hpCurrent - before;           // 0 ou 1 (perMinute=1)
+                    secondsRemaining = Math.max(0, secondsRemaining - 60*gained);
+                    nextTickTs += 60;
+                } else {
+                    secondsRemaining = Math.max(0, secondsRemaining - 1);
+                }
+                updateUI();
+            }
+
+            updateUI();
+            if (startDisabled) setInterval(tick, 1000);
+        })();
+    </script>
+{% endblock %}

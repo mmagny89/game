@@ -1,0 +1,104 @@
+{% extends 'base.html.twig' %}
+{% block title %}Arène PVP{% endblock %}
+{% block body %}
+    <div class="card">
+        <h2>Arène JcJ</h2>
+
+        <h3>Défis reçus</h3>
+        {% if challenges is empty %}
+            <p class="muted">Aucun défi en attente.</p>
+        {% else %}
+            <ul>
+                {% for c in challenges %}
+                    <li>
+                        Défi de {{ c.challenger.name }} —
+                        <form method="post" action="{{ path('arena_accept', {id:c.id}) }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('arena_accept_' ~ c.id) }}">
+                            <button>Accepter</button>
+                        </form>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <h3>Défier un joueur</h3>
+        <ul>
+            {% for o in others %}
+                <li>
+                    {{ o.name }} (Niv {{ o.level }})
+                    <form method="post" action="{{ path('arena_challenge',{id:o.id}) }}" style="display:inline;">
+                        <button>Défier</button>
+                    </form>
+                </li>
+            {% endfor %}
+        </ul>
+
+        <h3>Historique récent</h3>
+        {% if history is empty %}
+            <p class="muted">Aucun combat terminé.</p>
+        {% else %}
+            <ul>
+                {% for c in history %}
+                    <li>
+                        {{ c.startedAt ? c.startedAt|date('d/m H:i') : c.createdAt|date('d/m H:i') }}
+                        — {{ c.endedAt ? '🏁 Terminé' : '⏳ En cours' }} —
+                        {{ c.challenger ? c.challenger.name : '—' }}
+                        vs
+                        {{ c.opponent ? c.opponent.name : '—' }}
+                        —
+                        {% set winId = c.winnerCharacterId %}
+                        {% if winId and c.challenger and winId == c.challenger.id %}
+                            🏆 {{ c.challenger.name }}
+                        {% elseif winId and c.opponent and winId == c.opponent.id %}
+                            🏆 {{ c.opponent.name }}
+                        {% else %}
+                            ⚖ Égalité
+                        {% endif %}
+                        {% if c.combat %}
+                            ( <a href="{{ path('combat_view', { id: c.combat.id }) }}">voir</a> )
+                        {% else %}
+                            <span class="muted">(pas de log)</span>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
+
+    <script>
+        (async () => {
+            const combatId = {{ autoplay|default(0) }};
+            if (!combatId) return;
+
+            try {
+                const res = await fetch('/combat/' + combatId + '/json');
+                if (!res.ok) return;
+                const data = await res.json();
+                const turns = data.turns || [];
+                const log = document.createElement('ul');
+                log.style.listStyle = 'none';
+                log.style.paddingLeft = '0';
+                document.body.insertAdjacentHTML('afterbegin', `<h2>Rejeu du combat #${combatId}</h2>`);
+                document.body.prepend(log);
+
+                for (let i = 0; i < turns.length; i++) {
+                    const t = turns[i];
+                    const li = document.createElement('li');
+                    if (!t.action) {
+                        li.style.color = '#94a3b8';
+                        li.style.fontStyle = 'italic';
+                        li.textContent = t.log;
+                    } else {
+                        const color = t.action === 'crit' ? '#ef4444' : t.action === 'dodge' ? '#38bdf8' : '#fbbf24';
+                        li.innerHTML = `<strong style="color:${color}">${t.attacker}</strong> → ${t.defender} (${t.action}${t.damage ? ' -'+t.damage : ''})`;
+                    }
+                    log.appendChild(li);
+                    await new Promise(r => setTimeout(r, 200)); // petit délai entre les lignes
+                }
+
+            } catch (e) {
+                console.error('Erreur lecture combat', e);
+            }
+        })();
+    </script>
+{% endblock %}

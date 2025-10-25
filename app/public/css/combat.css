@@ -1,0 +1,13 @@
+#log li { padding:4px 0; border-bottom:1px solid #1f2937; }
+.ctrl { background:#334155; color:#e5e7eb; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; }
+.ctrl[disabled] { opacity:.5; cursor:not-allowed; }
+.ctrl-link { color:#cbd5e1; text-decoration:none; padding:6px 8px; }
+#error { background:#7f1d1d; color:#fff; padding:8px 12px; border-radius:8px; margin-bottom:8px; display:none; }
+.evt { padding:6px 8px; border-bottom:1px solid #1f2937; display:flex; align-items:center; gap:8px; }
+.badge { padding:2px 8px; border-radius:999px; color:#fff; font-weight:600; font-size:13px; min-width:60px; text-align:center; }
+.evt .icon { width:22px; text-align:center; font-size:16px; opacity:.9; }
+.evt .dmg  { font-weight:700; }
+.evt.hit   .dmg { color:#fbbf24; }
+.evt.crit  .dmg { color:#ef4444; }
+.evt.dodge { opacity:.85; font-style:italic; }
+.sys { color:#94a3b8; font-style:italic; padding:6px 8px; border-bottom:1px solid #1f2937; }
